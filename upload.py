@@ -69,7 +69,6 @@ login_data = {
 # Perform login
 login_response = session.post(BASE_URL + "authenticate.php", headers=headers, data=login_data)
 
-# Check if login was successful by examining the response
 if login_response.status_code == 200:
     print("Login successful!")
 
@@ -83,7 +82,6 @@ if login_response.status_code == 200:
     soup = BeautifulSoup(current_response.text, 'html.parser')
     form = soup.find('form')
     if form:
-        # Find all input fields within the form
         inputs = form.find_all('input')
         for input_field in inputs:
             field_name = input_field.get('name')
@@ -100,7 +98,7 @@ if login_response.status_code == 200:
             if result_key in data and data[result_key] > 0:
                 current_data[key] = data[result_key]
 
-    # Post the data after login
+    # Post new data
     post_response = session.post(BASE_URL + "12mapsdata.php", headers=headers, data=current_data)
 
     if post_response.status_code == 200:
