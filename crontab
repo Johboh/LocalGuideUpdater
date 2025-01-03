@@ -1,0 +1,6 @@
+# Update initially.
+@reboot /update.sh
+# Update the 15th every month 10 minutes past midnight
+10 0 15 * * /update.sh
+
+# line before EOF is required

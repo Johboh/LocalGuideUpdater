@@ -34,6 +34,7 @@ def fetch_website_source():
             "SOCS": "CAESHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmRlIAEaBgiAo_CmBg"
         }
 
+        print("Fetching stats...")
         response = requests.get(full_url, headers=headers, cookies=cookies)
         response.raise_for_status()
 
@@ -58,11 +59,10 @@ def parse(content: str, keys: list) -> dict:
 source_code = fetch_website_source()
 
 if source_code:
-    print("Website source fetched successfully!")
     result = parse(content = source_code, keys = CONTRIBUTIONS_KEY)
-    print(result)
+    print("Fetched stats sucessfully: %s" % result)
     with open(OUTPUT, 'w') as f:
         json.dump(result, f, indent=4)
-
 else:
-    print("Failed to fetch website source.")
+    print("Failed to fetch website source, exiting...")
+    exit(1)

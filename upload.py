@@ -1,7 +1,5 @@
 import os
 import json
-import time
-import hashlib
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -34,13 +32,16 @@ load_dotenv()
 USERNAME = os.getenv("TOP100LOCALGUIDES_USERNAME")
 PASSWORD = os.getenv("TOP100LOCALGUIDES_PASSWORD")
 
+if not USERNAME or not PASSWORD:
+    raise ValueError("TOP100LOCALGUIDES_USERNAME or TOP100LOCALGUIDES_PASSWORD environment variable is not set.")
+
 # Read result and map into dict
 data = {}
 with open(INPUT, 'r') as file:
     data = json.load(file)
 
 if data["total"] <= 0:
-    print("Missing total points, result is wrong")
+    print("Missing total points, result is wrong, will not continue. Exiting...")
     exit(1)
 
 # Initialize a session
@@ -50,12 +51,13 @@ headers = {
 }
 
 # Get CSRF Token
+print("Getting CSRF token...")
 token_response = session.get(BASE_URL, headers=headers)
 soup = BeautifulSoup(token_response.text, 'html.parser')
 token_input = soup.find('input', {'name': 'token'})
 
 if not token_input:
-    print("Unable to find CSRF token")
+    print("Unable to find CSRF token, exiting....")
     exit(1)
 token_input = token_input.get('value')
 
@@ -67,15 +69,15 @@ login_data = {
 }
 
 # Perform login
+print("Got token, logging in...")
 login_response = session.post(BASE_URL + "authenticate.php", headers=headers, data=login_data)
 
 if login_response.status_code == 200:
-    print("Login successful!")
-
     # Get current field values
+    print("Login successful, fetching current data...")
     current_response = session.get(BASE_URL + "12mapsdata.php", headers=headers)
     if current_response.status_code != 200:
-        print("Failed to get current data")
+        print("Failed to fetch current data, exiting...")
         exit(1)
 
     current_data = {}
@@ -88,9 +90,6 @@ if login_response.status_code == 200:
             field_value = input_field.get('value')
             current_data[field_name] = field_value
 
-    print("CURRENT DATA")
-    print(current_data)
-
     # Update current with result
     for key in current_data:
         if key in MAPPING:
@@ -98,14 +97,16 @@ if login_response.status_code == 200:
             if result_key in data and data[result_key] > 0:
                 current_data[key] = data[result_key]
 
+    print("Will post the following: %s" % current_data)
+
     # Post new data
     post_response = session.post(BASE_URL + "12mapsdata.php", headers=headers, data=current_data)
 
     if post_response.status_code == 200:
-        print("Data posted successfully!")
+        print("Data updated successfully")
     else:
-        print("Failed to post data.")
+        print("Failed to update data, exiting...")
         exit(1)
 else:
-    print("Login failed.")
+    print("Login failed, exiting...")
     exit(1)
