@@ -50,27 +50,29 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
 }
 
-# Get CSRF Token
-print("Getting CSRF token...")
+# Get login form data (CSRF Token)
+print("Getting current login form data and CSRF token...")
 token_response = session.get(BASE_URL, headers=headers)
 soup = BeautifulSoup(token_response.text, 'html.parser')
-token_input = soup.find('input', {'name': 'token'})
-
-if not token_input:
-    print("Unable to find CSRF token, exiting....")
+form = soup.find('form')
+if not form:
+    print("Unable to get current login form data, exiting....")
     exit(1)
-token_input = token_input.get('value')
 
-# Data for login
-login_data = {
-    'username': USERNAME,
-    'password': PASSWORD,
-    'token': token_input,
-}
+login_form = {}
+inputs = form.find_all('input')
+for input_field in inputs:
+    field_name = input_field.get('name')
+    field_value = input_field.get('value')
+    login_form[field_name] = field_value
+
+# Set username and password
+login_form["username"] = USERNAME
+login_form["password"] = PASSWORD
 
 # Perform login
-print("Got token, logging in...")
-login_response = session.post(BASE_URL + "authenticate.php", headers=headers, data=login_data)
+print("Got form and token, logging in...")
+login_response = session.post(BASE_URL + "authenticate.php", headers=headers, data=login_form)
 
 if login_response.status_code == 200:
     # Get current field values
